@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HRIDOY - Email Generator</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            text-align: center; 
+            background-color: #f0f2f5; 
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        
+        /* HRIDOY নামের স্পেশাল ডিজাইন */
+        .brand-name { 
+            margin-top: 0; 
+            font-size: 36px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            background: linear-gradient(45deg, #007bff, #00c6ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+        }
+        .subtitle {
+            color: #555;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        
+        textarea.input-box {
+            width: 100%;
+            height: 100px;
+            padding: 12px;
+            font-size: 15px;
+            border: 2px solid #e1e5eb;
+            border-radius: 8px;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+            resize: vertical;
+            outline: none;
+            transition: 0.3s;
+        }
+        textarea.input-box:focus {
+            border-color: #007bff;
+        }
+        
+        .generate-btn {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 123, 255, 0.2);
+        }
+        .generate-btn:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 123, 255, 0.3);
+        }
+
+        /* ক্লিক & কপি বক্সের ডিজাইন */
+        .copy-box {
+            margin-top: 30px;
+            padding: 40px 20px;
+            background-color: #e8f4fd;
+            border: 2px dashed #007bff;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: none;
+        }
+        .copy-box:hover {
+            background-color: #d0e7fa;
+        }
+        .copy-box:active {
+            transform: scale(0.98);
+        }
+        .current-email {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0056b3;
+            word-wrap: break-word;
+        }
+        .instruction {
+            font-size: 13px;
+            color: #555;
+            margin-top: 10px;
+        }
+
+        #status {
+            font-size: 16px;
+            font-weight: bold;
+            color: #28a745;
+            margin-top: 15px;
+        }
+        
+        /* নোটিফিকেশন এনিমেশন */
+        #toast {
+            visibility: hidden;
+            min-width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 12px;
+            position: fixed;
+            z-index: 1;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            font-size: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        #toast.show {
+            visibility: visible;
+            animation: fadein 0.5s, fadeout 0.5s 1.5s;
+        }
+
+        @keyframes fadein {
+            from {bottom: 0; opacity: 0;}
+            to {bottom: 30px; opacity: 1;}
+        }
+        @keyframes fadeout {
+            from {bottom: 30px; opacity: 1;}
+            to {bottom: 0; opacity: 0;}
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- আপনার কাস্টম নাম HRIDOY এখানে দেওয়া হয়েছে -->
+        <h1 class="brand-name">HRIDOY</h1>
+        <p class="subtitle">Advanced Email Generator By Hridoy</p>
+        
+        <textarea id="emailInput" class="input-box" placeholder="আপনার ইমেইলগুলো এখানে দিন...&#10;test1@gmail.com&#10;test2@gmail.com"></textarea>
+        
+        <button class="generate-btn" onclick="processEmails()">ইমেইল তৈরি করুন</button>
+
+        <p id="status"></p>
+
+        <div id="copyBox" class="copy-box" onclick="copyAndNext()">
+            <div id="currentEmail" class="current-email">example@gmail.com</div>
+            <div class="instruction">(কপি করতে এবং পরেরটি দেখতে এখানে ক্লিক করুন)</div>
+        </div>
+    </div>
+
+    <div id="toast">✅ কপি হয়েছে!</div>
+
+    <script>
+        let allGeneratedEmails = [];
+        let currentIndex = 0;
+
+        function processEmails() {
+            const input = document.getElementById('emailInput').value.trim();
+            if (!input) {
+                alert("দয়া করে ইমেইল ইনপুট দিন!");
+                return;
+            }
+
+            const emails = input.split('\n').map(e => e.trim()).filter(e => e !== '');
+            allGeneratedEmails = [];
+            currentIndex = 0;
+
+            for (let email of emails) {
+                if (email.includes('@')) {
+                    const parts = email.split('@');
+                    const username = parts[0];
+                    const domain = parts[1];
+                    
+                    const alphabets = username.match(/[a-zA-Z]/g);
+                    if (alphabets && alphabets.length > 15) {
+                        alert(`${email} এর ইউজারনেম অনেক বড়! এটি স্কিপ করা হচ্ছে।`);
+                        continue;
+                    }
+                    
+                    const combinations = getCombinations(username);
+                    combinations.forEach(combo => {
+                        allGeneratedEmails.push(combo + '@' + domain);
+                    });
+                }
+            }
+
+            if (allGeneratedEmails.length > 0) {
+                document.getElementById('copyBox').style.display = 'block';
+                updateDisplay();
+            } else {
+                document.getElementById('status').innerText = "সঠিক ইমেইল পাওয়া যায়নি!";
+                document.getElementById('copyBox').style.display = 'none';
+            }
+        }
+
+        function getCombinations(str) {
+            let results = [""];
+            for (let char of str) {
+                if (char.match(/[a-zA-Z]/)) {
+                    let temp = [];
+                    for (let res of results) {
+                        temp.push(res + char.toLowerCase());
+                        temp.push(res + char.toUpperCase());
+                    }
+                    results = temp;
+                } else {
+                    for (let i = 0; i < results.length; i++) {
+                        results[i] += char;
+                    }
+                }
+            }
+            return results;
+        }
+
+        function updateDisplay() {
+            const statusText = document.getElementById('status');
+            const emailDisplay = document.getElementById('currentEmail');
+
+            if (currentIndex < allGeneratedEmails.length) {
+                emailDisplay.innerText = allGeneratedEmails[currentIndex];
+                statusText.innerText = `বাকি আছে: ${allGeneratedEmails.length - currentIndex} টি (মোট: ${allGeneratedEmails.length})`;
+                statusText.style.color = "#28a745";
+            } else {
+                emailDisplay.innerText = "সব শেষ! 🎉";
+                statusText.innerText = "লিস্টের সবগুলো ইমেইল কপি করা হয়ে গেছে।";
+                statusText.style.color = "#dc3545";
+            }
+        }
+
+        function copyAndNext() {
+            if (currentIndex < allGeneratedEmails.length) {
+                const emailToCopy = allGeneratedEmails[currentIndex];
+                
+                navigator.clipboard.writeText(emailToCopy).then(() => {
+                    showToast();
+                    currentIndex++;
+                    updateDisplay();
+                }).catch(err => {
+                    alert("কপি করতে সমস্যা হয়েছে!");
+                });
+            }
+        }
+
+        function showToast() {
+            const toast = document.getElementById("toast");
+            toast.className = "show";
+            setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 2000);
+        }
+    </script>
+
+</body>
+</html>
